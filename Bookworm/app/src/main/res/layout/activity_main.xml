@@ -1,97 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@android:color/white"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/title"
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:text="@string/title_string_default" />
+        android:layout_height="?actionBarSize"
+        app:elevation="@dimen/extra_small_margin">
 
-    <TextView
-        android:id="@+id/rating"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:text="@string/rating_string_default" />
+            <android.support.v7.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:contentInsetLeft="0dp"
+                app:contentInsetStart="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/small_margin">
+
+                    <Button
+                        android:id="@+id/scan_isbn_button"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:background="@drawable/button_background"
+                        android:gravity="center"
+                        android:text="@string/scan_isbn"
+                        android:textColor="@android:color/white" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:textColor="@color/colorText"
+                        android:text="@string/or_string" />
+
+
+                    <Button
+                        android:id="@+id/enter_title_button"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:background="@drawable/button_background"
+                        android:gravity="center"
+                        android:text="@string/enter_title"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+
+
+            </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
+
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="8">
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/info_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:orientation="vertical"
+            android:alpha="0">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/extra_small_margin"
+                android:textColor="@color/colorText"/>
+
+            <TextView
+                android:id="@+id/rating"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/extra_small_margin"
+                android:textColor="@color/colorText"/>
+
+        </LinearLayout>
 
         <WebView
             android:id="@+id/review_web_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:alpha="0"
+            android:layout_marginTop="@dimen/extra_small_margin"
             android:background="@android:color/white"
-            android:alpha="0"/>
-
-        <ImageView
-            android:id="@+id/center_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:src="@drawable/ic_android_black_24dp"
-            android:visibility="gone"/>
+            android:layout_below="@id/info_layout"/>
 
         <com.github.ybq.android.spinkit.SpinKitView
             android:id="@+id/spinkit_view"
-            app:SpinKit_Style="MultiplePulse"
             style="@style/SpinKitView.Large"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            app:SpinKit_Color="@color/colorAccent"
             android:alpha="0.0"
-            />
+            app:SpinKit_Color="@color/colorAccent"
+            app:SpinKit_Style="MultiplePulse" />
 
 
     </RelativeLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="4dp">
-
-        <Button
-            style="?android:attr/buttonBarButtonStyle"
-            android:id="@+id/scan_isbn_button"
-            android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="wrap_content"
-            android:text="@string/scan_isbn"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:background="@drawable/button_background"/>
-
-        <TextView
-            android:layout_height="wrap_content"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:text="@string/or_string"
-            android:gravity="center"/>
-
-
-        <Button
-            style="?android:attr/buttonBarButtonStyle"
-            android:id="@+id/enter_title_button"
-            android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="wrap_content"
-            android:text="@string/enter_title"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:background="@drawable/button_background"/>
-    </LinearLayout>
-
-
-
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

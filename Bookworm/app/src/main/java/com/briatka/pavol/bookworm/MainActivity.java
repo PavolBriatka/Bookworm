@@ -16,7 +16,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     TextView ratingTv;
     @BindView(R.id.spinkit_view)
     SpinKitView loadingAnimation;
-    @BindView(R.id.center_image)
-    ImageView centerImage;
+    @BindView(R.id.info_layout)
+    LinearLayout infoLayout;
 
     static final int REQUEST_IMAGE_CAPTURE = 27;
     private static final String API_KEY = "RrXbLty3WjyNPa58H93Rdw";
@@ -74,9 +74,11 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
 
     Bitmap imageBitmap;
     String tempFilePath;
-    String screenWidth;
+    String mScreenWidth;
+    String mScreenHeight;
     String isbnCode;
-    int duration = 500;
+    int shortDuration = 500;
+    int longDuration = 1000;
 
     FirebaseVisionImage image;
     FirebaseVisionTextRecognizer textRecognizer;
@@ -86,17 +88,9 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
 
     @Override
     public void sendInput(String input) {
-        //only works when there is already loaded content
-        /*reviewsWebView.loadUrl("about:blank");
-        reviewsWebView.setWebViewClient(new WebViewClient(){
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-                loadingAnimation.animate().alpha(1.0f).setDuration(duration);
-            }
-        });*/
-        if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(1000);
-        loadingAnimation.animate().alpha(1.0f).setDuration(duration);
+        if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(longDuration);
+        if(infoLayout.getAlpha() > 0) infoLayout.animate().alpha(0.0f).setDuration(longDuration);
+        loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
         reviewsFromTitle(input);
     }
 
@@ -106,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        screenWidth = getScreenWidth();
+        getScreenDimens();
         textRecognizer = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
         detector = FirebaseVision.getInstance().getVisionBarcodeDetector();
 
@@ -147,12 +141,12 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                     String rating = String.format(getResources().getString(R.string.rating_string), book.getRating());
                     String reviews = selectSubString(book.getReviewsWidget());
                     //process values
-                    reviews = reviews.replace("565", screenWidth);
+                    reviews = reviews.replace("565", mScreenWidth);
                     setupWebView(reviews);
                     titleTv.setText(title);
                     ratingTv.setText(rating);
                 } else {
-                    loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                    loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                     Toast.makeText(MainActivity.this,
                             getString(R.string.title_not_found),
                             Toast.LENGTH_SHORT).show();
@@ -161,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
 
             @Override
             public void onFailure(Call<BookObject> call, Throwable t) {
-                loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                 Toast.makeText(MainActivity.this, "error :(", Toast.LENGTH_SHORT).show();
             }
         });
@@ -182,12 +176,12 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                     String rating = String.format(getResources().getString(R.string.rating_string), book.getRating());
                     String reviews = selectSubString(book.getReviewsWidget());
                     //process values
-                    reviews = reviews.replace("565", screenWidth);
+                    reviews = reviews.replace("565", mScreenWidth);
                     setupWebView(reviews);
                     titleTv.setText(title);
                     ratingTv.setText(rating);
                 } else {
-                    loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                    loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                     Toast.makeText(MainActivity.this,
                             getString(R.string.isbn_not_found),
                             Toast.LENGTH_SHORT).show();
@@ -196,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
 
             @Override
             public void onFailure(Call<BookObject> call, Throwable t) {
-                loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                 Toast.makeText(MainActivity.this, "error :(", Toast.LENGTH_SHORT).show();
             }
         });
@@ -230,13 +224,13 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            loadingAnimation.animate().alpha(1.0f).setDuration(duration);
+            loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
             reviewsWebView.loadUrl("about:blank");
             reviewsWebView.setWebViewClient(new WebViewClient(){
                 @Override
                 public void onPageStarted(WebView view, String url, Bitmap favicon) {
                     super.onPageStarted(view, url, favicon);
-                    loadingAnimation.animate().alpha(1.0f).setDuration(duration);
+                    loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
                 }
             });
             imageBitmap = PhotoUtils.fixRotation(PhotoUtils.mResampleImage(tempFilePath, this), tempFilePath);
@@ -261,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                        loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                         Toast.makeText(MainActivity.this,
                                 "Problem with code recognition" + e.toString(),
                                 Toast.LENGTH_SHORT).show();
@@ -283,8 +277,9 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                loadingAnimation.animate().alpha(0.0f).setDuration(duration);
-                reviewsWebView.animate().alpha(1.0f).setDuration(1000);
+                loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
+                reviewsWebView.animate().alpha(1.0f).setDuration(longDuration);
+                infoLayout.animate().alpha(1.0f).setDuration(longDuration);
             }
         });
         reviewsWebView.setWebChromeClient(new WebChromeClient(){
@@ -295,14 +290,17 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
         });
     }
 
-    private String getScreenWidth() {
+    private void getScreenDimens() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         int screenWidth = displayMetrics.widthPixels;
+        int screenHeight = displayMetrics.heightPixels;
         float density = this.getResources().getDisplayMetrics().density;
-        float dp = screenWidth/density;
-        return String.valueOf(((int) dp) - 10);
+        float dpWidth = screenWidth/density;
+        float dpHeight = screenHeight/density;
+        mScreenWidth = String.valueOf(((int) dpWidth) - 10);
+        mScreenHeight = String.valueOf(((int) dpHeight));
     }
 
     @Override

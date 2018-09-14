@@ -4,9 +4,7 @@
     <string name="no_data_to_process">You have to either enter the title or scan the ISBN code.</string>
     <string name="or_string">OR</string>
     <string name="title_string">Title: %1$s</string>
-    <string name="rating_string">Rating: %1$s</string>
-    <string name="title_string_default">Title:</string>
-    <string name="rating_string_default">Rating:</string>
+    <string name="rating_string">Average rating: %1$s</string>
     <string name="isbn_not_found">Unfortunately, this code was not found.</string>
     <string name="title_not_found">Unfortunately, this title was not found.</string>
     <string name="scan_isbn">Scan ISBN</string>
