@@ -86,14 +86,16 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
 
     @Override
     public void sendInput(String input) {
-        reviewsWebView.loadUrl("about:blank");
+        //only works when there is already loaded content
+        /*reviewsWebView.loadUrl("about:blank");
         reviewsWebView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 loadingAnimation.animate().alpha(1.0f).setDuration(duration);
             }
-        });
+        });*/
+        if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(1000);
         loadingAnimation.animate().alpha(1.0f).setDuration(duration);
         reviewsFromTitle(input);
     }
@@ -107,22 +109,6 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
         screenWidth = getScreenWidth();
         textRecognizer = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
         detector = FirebaseVision.getInstance().getVisionBarcodeDetector();
-
-        /*AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.0f);
-        fadeOut.setDuration(2000);
-        fadeOut.setRepeatCount(Animation.INFINITE);
-        //fadeOut.setInterpolator(new DecelerateInterpolator());
-
-        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-        fadeIn.setDuration(2000);
-        fadeIn.setStartOffset(2000 + fadeOut.getStartOffset());
-        fadeIn.setRepeatCount(Animation.INFINITE);
-        //fadeIn.setInterpolator(new DecelerateInterpolator());
-
-        AnimationSet animSet = new AnimationSet(false);
-        animSet.addAnimation(fadeOut);
-        animSet.addAnimation(fadeIn);
-        centerImage.setAnimation(animSet);*/
 
 
         Retrofit.Builder builder = new Retrofit.Builder()
@@ -298,12 +284,13 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 loadingAnimation.animate().alpha(0.0f).setDuration(duration);
+                reviewsWebView.animate().alpha(1.0f).setDuration(1000);
             }
         });
         reviewsWebView.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                Log.e("progress", String.valueOf(newProgress));
+                Log.e("progress", String.valueOf(reviewsWebView.getProgress()));
             }
         });
     }
