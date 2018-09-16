@@ -1,5 +1,7 @@
 package com.briatka.pavol.bookworm;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -8,15 +10,17 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.KeyEvent;
-import android.webkit.WebChromeClient;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,6 +70,10 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     SpinKitView loadingAnimation;
     @BindView(R.id.info_layout)
     LinearLayout infoLayout;
+    @BindView(R.id.rating_bar)
+    RatingBar ratingBar;
+    @BindView(R.id.main_card_view)
+    CardView mainCardView;
 
     static final int REQUEST_IMAGE_CAPTURE = 27;
     private static final String API_KEY = "RrXbLty3WjyNPa58H93Rdw";
@@ -135,22 +143,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
             public void onResponse(Call<BookObject> call, Response<BookObject> response) {
                 //get values
                 BookObject bookObject = response.body();
-                if(bookObject != null) {
-                    Book book = bookObject.getBook();
-                    String title = String.format(getResources().getString(R.string.title_string), book.getTitle());
-                    String rating = String.format(getResources().getString(R.string.rating_string), book.getRating());
-                    String reviews = selectSubString(book.getReviewsWidget());
-                    //process values
-                    reviews = reviews.replace("565", mScreenWidth);
-                    setupWebView(reviews);
-                    titleTv.setText(title);
-                    ratingTv.setText(rating);
-                } else {
-                    loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.title_not_found),
-                            Toast.LENGTH_SHORT).show();
-                }
+                //process values
+                processNetworkResponse(bookObject);
             }
 
             @Override
@@ -170,22 +164,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
             public void onResponse(Call<BookObject> call, Response<BookObject> response) {
                 //get values
                 BookObject bookObject = response.body();
-                if(bookObject != null) {
-                    Book book = bookObject.getBook();
-                    String title = String.format(getResources().getString(R.string.title_string), book.getTitle());
-                    String rating = String.format(getResources().getString(R.string.rating_string), book.getRating());
-                    String reviews = selectSubString(book.getReviewsWidget());
-                    //process values
-                    reviews = reviews.replace("565", mScreenWidth);
-                    setupWebView(reviews);
-                    titleTv.setText(title);
-                    ratingTv.setText(rating);
-                } else {
-                    loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.isbn_not_found),
-                            Toast.LENGTH_SHORT).show();
-                }
+                //process values
+                processNetworkResponse(bookObject);
             }
 
             @Override
@@ -194,6 +174,22 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                 Toast.makeText(MainActivity.this, "error :(", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void processNetworkResponse(BookObject bookObject) {
+        if(bookObject != null) {
+            Book book = bookObject.getBook();
+            String reviews = selectSubString(book.getReviewsWidget());
+            reviews = reviews.replace("565", mScreenWidth);
+            setupWebView(reviews);
+            titleTv.setText(book.getTitle());
+            ratingBar.setRating(Float.parseFloat(book.getRating()));
+        } else {
+            loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
+            Toast.makeText(MainActivity.this,
+                    getString(R.string.isbn_not_found),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void dispatchTakePictureIntent() {
@@ -274,14 +270,50 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                 loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                 reviewsWebView.animate().alpha(1.0f).setDuration(longDuration);
                 infoLayout.animate().alpha(1.0f).setDuration(longDuration);
+                int lineCount = titleTv.getLineCount();
+                int finalDimen = ((lineCount * 57) + 113) + 168;
+                ValueAnimator valueAnimator = ValueAnimator.ofInt(mainCardView.getMeasuredHeight(), finalDimen );
+                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        int val = (Integer) valueAnimator.getAnimatedValue();
+                        ViewGroup.LayoutParams layoutParams = mainCardView.getLayoutParams();
+                        layoutParams.height = val;
+                        mainCardView.setLayoutParams(layoutParams);
+                    }
+                });
+                valueAnimator.setDuration(longDuration);
+                valueAnimator.start();
+                valueAnimator.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animator) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animator) {
+                        infoLayout.setVisibility(View.VISIBLE);
+                        infoLayout.animate().alpha(1.0f).setDuration(longDuration);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animator) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animator) {
+
+                    }
+                });
             }
         });
-        reviewsWebView.setWebChromeClient(new WebChromeClient(){
+        /*reviewsWebView.setWebChromeClient(new WebChromeClient(){
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 Log.e("progress", String.valueOf(reviewsWebView.getProgress()));
             }
-        });
+        });*/
     }
 
     private void getScreenDimens() {
