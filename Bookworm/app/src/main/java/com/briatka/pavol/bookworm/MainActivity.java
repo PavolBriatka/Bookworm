@@ -225,14 +225,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
-            reviewsWebView.loadUrl("about:blank");
-            reviewsWebView.setWebViewClient(new WebViewClient(){
-                @Override
-                public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                    super.onPageStarted(view, url, favicon);
-                    loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
-                }
-            });
+            if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(longDuration);
+            if(infoLayout.getAlpha() > 0) infoLayout.animate().alpha(0.0f).setDuration(longDuration);
             imageBitmap = PhotoUtils.fixRotation(PhotoUtils.mResampleImage(tempFilePath, this), tempFilePath);
             image = FirebaseVisionImage.fromBitmap(imageBitmap);
             processBarcodeScan();
