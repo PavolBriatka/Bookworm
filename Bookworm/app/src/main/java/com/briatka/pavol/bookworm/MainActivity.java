@@ -1,7 +1,5 @@
 package com.briatka.pavol.bookworm;
 
-import android.animation.Animator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -14,8 +12,6 @@ import android.support.v7.widget.CardView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
-import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -37,6 +33,8 @@ import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
+
+import net.cachapa.expandablelayout.ExpandableLayout;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     RatingBar ratingBar;
     @BindView(R.id.main_card_view)
     CardView mainCardView;
+    @BindView(R.id.expandable_layout)
+    ExpandableLayout expandableLayout;
 
     static final int REQUEST_IMAGE_CAPTURE = 27;
     private static final String API_KEY = "RrXbLty3WjyNPa58H93Rdw";
@@ -97,7 +97,8 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     @Override
     public void sendInput(String input) {
         if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(longDuration);
-        if(infoLayout.getAlpha() > 0) infoLayout.animate().alpha(0.0f).setDuration(longDuration);
+        if(infoLayout.getAlpha() > 0) infoLayout.animate().alpha(0.0f).setDuration(shortDuration);
+        if(expandableLayout.isExpanded()) expandableLayout.collapse();
         loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
         reviewsFromTitle(input);
     }
@@ -223,6 +224,7 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
             loadingAnimation.animate().alpha(1.0f).setDuration(shortDuration);
             if(reviewsWebView.getAlpha() > 0) reviewsWebView.animate().alpha(0.0f).setDuration(longDuration);
             if(infoLayout.getAlpha() > 0) infoLayout.animate().alpha(0.0f).setDuration(longDuration);
+            if(expandableLayout.isExpanded()) expandableLayout.collapse();
             imageBitmap = PhotoUtils.fixRotation(PhotoUtils.mResampleImage(tempFilePath, this), tempFilePath);
             image = FirebaseVisionImage.fromBitmap(imageBitmap);
             processBarcodeScan();
@@ -269,51 +271,10 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
                 super.onPageFinished(view, url);
                 loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                 reviewsWebView.animate().alpha(1.0f).setDuration(longDuration);
+                expandableLayout.expand();
                 infoLayout.animate().alpha(1.0f).setDuration(longDuration);
-                int lineCount = titleTv.getLineCount();
-                int finalDimen = ((lineCount * 57) + 113) + 168;
-                ValueAnimator valueAnimator = ValueAnimator.ofInt(mainCardView.getMeasuredHeight(), finalDimen );
-                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                        int val = (Integer) valueAnimator.getAnimatedValue();
-                        ViewGroup.LayoutParams layoutParams = mainCardView.getLayoutParams();
-                        layoutParams.height = val;
-                        mainCardView.setLayoutParams(layoutParams);
-                    }
-                });
-                valueAnimator.setDuration(longDuration);
-                valueAnimator.start();
-                valueAnimator.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animator) {
-
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animator) {
-                        infoLayout.setVisibility(View.VISIBLE);
-                        infoLayout.animate().alpha(1.0f).setDuration(longDuration);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animator) {
-
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animator) {
-
-                    }
-                });
             }
         });
-        /*reviewsWebView.setWebChromeClient(new WebChromeClient(){
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                Log.e("progress", String.valueOf(reviewsWebView.getProgress()));
-            }
-        });*/
     }
 
     private void getScreenDimens() {
