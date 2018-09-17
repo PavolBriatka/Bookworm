@@ -27,7 +27,6 @@ import com.briatka.pavol.bookworm.customobjects.BookObject;
 import com.github.ybq.android.spinkit.SpinKitView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector;
@@ -232,15 +231,22 @@ public class MainActivity extends AppCompatActivity implements MyDialogFragment.
     }
 
     private void processBarcodeScan() {
-        Task<List<FirebaseVisionBarcode>> result = detector.detectInImage(image)
+        detector.detectInImage(image)
                 .addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionBarcode>>() {
                     @Override
                     public void onSuccess(List<FirebaseVisionBarcode> barcodes) {
-                        for(FirebaseVisionBarcode barcode : barcodes){
+                        if(barcodes.size() > 0){
+                        for(FirebaseVisionBarcode barcode : barcodes) {
                             isbnCode = barcode.getRawValue();
-                            if(!TextUtils.isEmpty(isbnCode)){
+                            if (!TextUtils.isEmpty(isbnCode)) {
                                 reviewsFromIsbn();
                             }
+                        }
+                        } else {
+                            Toast.makeText(MainActivity.this,
+                                    getString(R.string.wrong_photo_quality_toast),
+                                    Toast.LENGTH_LONG).show();
+                            loadingAnimation.animate().alpha(0.0f).setDuration(shortDuration);
                         }
                     }
                 })

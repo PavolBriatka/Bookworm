@@ -8,4 +8,5 @@
     <string name="title_not_found">Unfortunately, this title was not found.</string>
     <string name="scan_isbn">Scan ISBN</string>
     <string name="enter_title">Enter title</string>
+    <string name="wrong_photo_quality_toast">The code was not recognised - please make sure the photo is not blurry or rotated.</string>
 </resources>
