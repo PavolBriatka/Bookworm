@@ -3,7 +3,6 @@ package com.briatka.pavol.bookworm
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.content.FileProvider
@@ -14,42 +13,30 @@ import android.util.DisplayMetrics
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.RatingBar
 import android.widget.TextView
 import android.widget.Toast
-
-import com.briatka.pavol.bookworm.clients.BookIsbnReviewClient
-import com.briatka.pavol.bookworm.clients.BookTitleReviewClient
-import com.briatka.pavol.bookworm.customobjects.Book
-import com.briatka.pavol.bookworm.customobjects.BookObject
-import com.github.ybq.android.spinkit.SpinKitView
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.ml.vision.FirebaseVision
-import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode
-import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector
-import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
-
-import net.cachapa.expandablelayout.ExpandableLayout
-
-import java.io.File
-import java.io.IOException
-
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
+import com.briatka.pavol.bookworm.clients.BookIsbnReviewClient
+import com.briatka.pavol.bookworm.clients.BookTitleReviewClient
+import com.briatka.pavol.bookworm.customobjects.BookObject
 import com.briatka.pavol.bookworm.models.BookPresenter
+import com.github.ybq.android.spinkit.SpinKitView
+import com.google.firebase.ml.vision.FirebaseVision
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector
+import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import okhttp3.OkHttpClient
+import net.cachapa.expandablelayout.ExpandableLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
-import retrofit2.converter.simplexml.SimpleXmlConverterFactory
+import java.io.File
+import java.io.IOException
 
 class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
@@ -94,7 +81,8 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         if (infoLayout!!.alpha > 0) infoLayout!!.animate().alpha(0.0f).duration = shortDuration.toLong()
         if (expandableLayout!!.isExpanded) expandableLayout!!.collapse()
         loadingAnimation!!.animate().alpha(1.0f).duration = shortDuration.toLong()
-        reviewsFromTitle(input)
+        //reviewsFromTitle(input)
+        viewModel?.setIsbn(input)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -152,7 +140,9 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         val client = retrofit.create(BookIsbnReviewClient::class.java)
         val call = client.getReviewsIsbn(isbnCode, API_KEY)
 
-        call.enqueue(object : Callback<BookObject> {
+        viewModel?.setIsbn(isbnCode!!)
+
+        /*call.enqueue(object : Callback<BookObject> {
             override fun onResponse(call: Call<BookObject>, response: Response<BookObject>) {
                 //get values
                 val bookObject = response.body()
@@ -164,7 +154,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
                 loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
                 Toast.makeText(this@MainActivity, "error :(", Toast.LENGTH_SHORT).show()
             }
-        })
+        })*/
     }
 
     private fun processNetworkResponse(bookObject: BookObject?) {
