@@ -2,7 +2,7 @@ package com.briatka.pavol.bookworm.models
 
 import com.briatka.pavol.bookworm.customobjects.Book
 
-class NetworkRequestResult(val book: Book, val status: Status = Status.NONE) {
+class NetworkRequestResult(val book: Book?, val status: Status = Status.NONE) {
 
     companion object {
 
@@ -10,15 +10,15 @@ class NetworkRequestResult(val book: Book, val status: Status = Status.NONE) {
             return NetworkRequestResult(book, Status.NONE)
         }
         fun onServerError(): NetworkRequestResult {
-            return NetworkRequestResult(Book(), Status.SERVER_ERROR)
+            return NetworkRequestResult(null, Status.SERVER_ERROR)
         }
 
         fun onUnauthorizedError(): NetworkRequestResult {
-            return NetworkRequestResult(Book(), Status.ERROR_401 )
+            return NetworkRequestResult(null, Status.ERROR_401 )
         }
 
         fun onUnknownError(): NetworkRequestResult {
-            return NetworkRequestResult(Book(),Status.UNKNOWN_ERROR)
+            return NetworkRequestResult(null,Status.UNKNOWN_ERROR)
         }
 
     }
