@@ -9,21 +9,19 @@ import io.reactivex.subjects.ReplaySubject
 
 class BookPresenter : BookViewModel {
 
-    private var interactor = ReplaySubject.create<IBookInteractor>()
 
-    private var pIsbn: String = ""
-    private var pTitle: String = ""
+    private var interactor = ReplaySubject.create<IBookInteractor>()
 
     private val bookErrorSubject = BehaviorSubject.create<NetworkRequestResult.Status>()
 
-
     override fun getIsbnData(isbn: String): Observable<Book> {
         return interactor.flatMap { interactor ->
-            interactor.getIsbnData(pIsbn)
+            interactor.getIsbnData(isbn)
                     .flatMap { response ->
                         when (response.status) {
                             NetworkRequestResult.Status.NONE -> {
-                                bookErrorSubject.onNext(NetworkRequestResult.Status.NONE)
+                                bookErrorSubject.onNext(NetworkRequestResult.Status.SUCCESS)
+
                                 Observable.just(response.book)
                             }
                             NetworkRequestResult.Status.SERVER_ERROR -> {
@@ -47,8 +45,9 @@ class BookPresenter : BookViewModel {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+
     fun finish() {
-        if(!interactor.hasComplete()) interactor.onComplete()
+        if (!interactor.hasComplete()) interactor.onComplete()
         bookErrorSubject.onComplete()
     }
 }

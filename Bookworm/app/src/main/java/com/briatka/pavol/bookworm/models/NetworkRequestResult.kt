@@ -7,7 +7,7 @@ class NetworkRequestResult(val book: Book?, val status: Status = Status.NONE) {
     companion object {
 
         fun onSuccess(book: Book): NetworkRequestResult {
-            return NetworkRequestResult(book, Status.NONE)
+            return NetworkRequestResult(book, Status.SUCCESS)
         }
         fun onServerError(): NetworkRequestResult {
             return NetworkRequestResult(null, Status.SERVER_ERROR)
@@ -25,6 +25,7 @@ class NetworkRequestResult(val book: Book?, val status: Status = Status.NONE) {
 
     enum class Status {
         NONE,
+        SUCCESS,
         SERVER_ERROR,
         ERROR_401,
         UNKNOWN_ERROR
