@@ -22,14 +22,18 @@ import butterknife.ButterKnife
 import butterknife.OnClick
 import com.briatka.pavol.bookworm.clients.BookIsbnReviewClient
 import com.briatka.pavol.bookworm.clients.BookTitleReviewClient
+import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.customobjects.BookObject
+import com.briatka.pavol.bookworm.models.BookInteractor
 import com.briatka.pavol.bookworm.models.BookPresenter
 import com.github.ybq.android.spinkit.SpinKitView
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import net.cachapa.expandablelayout.ExpandableLayout
 import retrofit2.Call
 import retrofit2.Callback
@@ -73,7 +77,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
     lateinit var retrofit: Retrofit
 
     //NEW BLOCK OF MVVM VARIABLES
-    private var viewModel: BookPresenter? = null
+    private lateinit var viewModel: BookPresenter
     private lateinit var subscriptions: CompositeDisposable
 
     override fun sendInput(input: String) {
@@ -81,8 +85,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         if (infoLayout!!.alpha > 0) infoLayout!!.animate().alpha(0.0f).duration = shortDuration.toLong()
         if (expandableLayout!!.isExpanded) expandableLayout!!.collapse()
         loadingAnimation!!.animate().alpha(1.0f).duration = shortDuration.toLong()
-        //reviewsFromTitle(input)
-        viewModel?.setIsbn(input)
+        reviewsFromTitle(input)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,14 +97,18 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         textRecognizer = FirebaseVision.getInstance().onDeviceTextRecognizer
         detector = FirebaseVision.getInstance().visionBarcodeDetector
 
+        viewModel = BookPresenter()
+
     }
 
     override fun onStart() {
         super.onStart()
 
+        initInteractor()
+
         subscriptions = CompositeDisposable()
 
-        subscriptions.addAll()
+        subscriptions.addAll(bookUpdate())
     }
 
     @OnClick(R.id.enter_title_button)
@@ -116,6 +123,22 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
     }
 
 
+    private fun initInteractor() {
+
+        if (!viewModel.isInteractorReady()){
+            viewModel.setInteractor(BookInteractor())
+        }
+
+
+    }
+
+    private fun bookUpdate(): Disposable {
+        return viewModel.returnBookData()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { book ->
+                    processNetworkResponse(book)
+                }
+    }
 
     private fun reviewsFromTitle(title: String) {
         val client = retrofit.create(BookTitleReviewClient::class.java)
@@ -124,7 +147,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         call.enqueue(object : Callback<BookObject> {
             override fun onResponse(call: Call<BookObject>, response: Response<BookObject>) {
                 //get values
-                val bookObject = response.body()
+                val bookObject = response.body()?.book
                 //process values
                 processNetworkResponse(bookObject)
             }
@@ -157,14 +180,13 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         })*/
     }
 
-    private fun processNetworkResponse(bookObject: BookObject?) {
-        if (bookObject != null) {
-            val book = bookObject.book
-            var reviews = selectSubString(book!!.reviewsWidget!!)
+    private fun processNetworkResponse(book: Book?) {
+        if (book != null) {
+            var reviews = selectSubString(book.reviewsWidget!!)
             reviews = reviews.replace("565", mScreenWidth)
             setupWebView(reviews)
             titleTv!!.text = book.title
-            ratingBar!!.rating = java.lang.Float.parseFloat(book.rating)
+            ratingBar!!.rating = java.lang.Float.parseFloat(book.rating!!)
         } else {
             loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
             Toast.makeText(this@MainActivity,
@@ -216,8 +238,8 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
                     if (barcodes.size > 0) {
                         for (barcode in barcodes) {
                             isbnCode = barcode.rawValue
-                            if (!TextUtils.isEmpty(isbnCode)) {
-                                reviewsFromIsbn()
+                            if (!isbnCode.isNullOrEmpty()) {
+                                viewModel.setIsbn(isbnCode!!)
                             }
                         }
                     } else {

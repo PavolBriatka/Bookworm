@@ -9,4 +9,6 @@ interface BookViewModel {
 
     fun getTitleData(title: String): Observable<Book>
 
+    fun returnBookData(): Observable<Book>
+
 }

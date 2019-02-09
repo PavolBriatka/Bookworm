@@ -27,6 +27,8 @@ class BookPresenter : BookViewModel {
     }
 
     override fun getIsbnData(isbn: String): Observable<Book> {
+
+
         return interactor.flatMap { interactor ->
             interactor.getIsbnData(isbn)
                     .flatMap { response ->
@@ -67,6 +69,7 @@ class BookPresenter : BookViewModel {
 
     private fun getBookIsbnUpdate(): Disposable {
         return subjectIsbn.hide()
+                .skip(1)
                 .flatMap { data ->
                     getIsbnData(data)
                 }
@@ -77,6 +80,7 @@ class BookPresenter : BookViewModel {
 
     private fun getBookTitleUpdate(): Disposable {
         return subjectTitle.hide()
+                .skip(1)
                 .flatMap { data ->
                     getTitleData(data)
                 }
@@ -85,9 +89,25 @@ class BookPresenter : BookViewModel {
                 }
     }
 
+    override fun returnBookData(): Observable<Book> {
+        return bookSubject.hide()
+    }
+
+    fun setInteractor(mInteractor: IBookInteractor) {
+        if (interactor.hasComplete()) {
+            interactor.onNext(mInteractor)
+            interactor.onComplete()
+        }
+    }
+
+    fun isInteractorReady(): Boolean {
+        return interactor.hasValue()
+    }
+
 
     fun finish() {
         if (!interactor.hasComplete()) interactor.onComplete()
         bookErrorSubject.onComplete()
+        subscription.dispose()
     }
 }
