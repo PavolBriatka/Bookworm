@@ -13,10 +13,7 @@ import android.util.DisplayMetrics
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.LinearLayout
-import android.widget.RatingBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
@@ -34,6 +31,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import kotlinx.android.synthetic.main.activity_main.*
 import net.cachapa.expandablelayout.ExpandableLayout
 import retrofit2.Call
 import retrofit2.Callback
@@ -99,6 +97,15 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
         viewModel = BookPresenter()
 
+        enter_title_button.setOnClickListener{
+            val dialog = MyDialogFragment()
+            dialog.show(supportFragmentManager, "MyDialogFragment")
+        }
+
+        scan_isbn_button.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+
     }
 
     override fun onStart() {
@@ -109,17 +116,6 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         subscriptions = CompositeDisposable()
 
         subscriptions.addAll(bookUpdate())
-    }
-
-    @OnClick(R.id.enter_title_button)
-    fun openDialog() {
-        val dialog = MyDialogFragment()
-        dialog.show(supportFragmentManager, "MyDialogFragment")
-    }
-
-    @OnClick(R.id.scan_isbn_button)
-    fun scanIsbn() {
-        dispatchTakePictureIntent()
     }
 
 
@@ -159,27 +155,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         })
     }
 
-    private fun reviewsFromIsbn() {
-        val client = retrofit.create(BookIsbnReviewClient::class.java)
-        val call = client.getReviewsIsbn(isbnCode, API_KEY)
-
-        viewModel?.setIsbn(isbnCode!!)
-
-        /*call.enqueue(object : Callback<BookObject> {
-            override fun onResponse(call: Call<BookObject>, response: Response<BookObject>) {
-                //get values
-                val bookObject = response.body()
-                //process values
-                processNetworkResponse(bookObject)
-            }
-
-            override fun onFailure(call: Call<BookObject>, t: Throwable) {
-                loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
-                Toast.makeText(this@MainActivity, "error :(", Toast.LENGTH_SHORT).show()
-            }
-        })*/
-    }
-
+    
     private fun processNetworkResponse(book: Book?) {
         if (book != null) {
             var reviews = selectSubString(book.reviewsWidget!!)
