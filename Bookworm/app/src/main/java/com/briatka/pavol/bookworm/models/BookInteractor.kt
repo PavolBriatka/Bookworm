@@ -1,5 +1,6 @@
 package com.briatka.pavol.bookworm.models
 
+import android.util.Log
 import com.briatka.pavol.bookworm.clients.RetrofitApiClient
 import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.interfaces.IBookInteractor
@@ -12,6 +13,7 @@ class BookInteractor: IBookInteractor {
     private val API_KEY = "RrXbLty3WjyNPa58H93Rdw"
 
     override fun getIsbnData(isbn: String): Observable<NetworkRequestResult> {
+        Log.d("QWER", "interactor")
         val client = RetrofitInstance.retrofitInstance.create(RetrofitApiClient::class.java)
 
         return client.getReviewsIsbn(isbn, API_KEY)

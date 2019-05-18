@@ -1,5 +1,6 @@
 package com.briatka.pavol.bookworm.models
 
+import android.util.Log
 import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.interfaces.BookViewModel
 import com.briatka.pavol.bookworm.interfaces.IBookInteractor
@@ -27,13 +28,14 @@ class BookPresenter : BookViewModel {
     }
 
     override fun getIsbnData(isbn: String): Observable<Book> {
-
+        Log.e("QWER","getisbn")
 
         return interactor.flatMap { interactor ->
             interactor.getIsbnData(isbn)
                     .flatMap { response ->
+                        Log.d("QWER","status " + response.status)
                         when (response.status) {
-                            NetworkRequestResult.Status.NONE -> {
+                            NetworkRequestResult.Status.SUCCESS -> {
                                 bookErrorSubject.onNext(NetworkRequestResult.Status.SUCCESS)
 
                                 Observable.just(response.book)
@@ -60,6 +62,7 @@ class BookPresenter : BookViewModel {
     }
 
     fun setIsbn(isbn: String) {
+        Log.e("QWER","setisbn")
         subjectIsbn.onNext(isbn)
     }
 
@@ -69,7 +72,6 @@ class BookPresenter : BookViewModel {
 
     private fun getBookIsbnUpdate(): Disposable {
         return subjectIsbn.hide()
-                .skip(1)
                 .flatMap { data ->
                     getIsbnData(data)
                 }
@@ -94,7 +96,8 @@ class BookPresenter : BookViewModel {
     }
 
     fun setInteractor(mInteractor: IBookInteractor) {
-        if (interactor.hasComplete()) {
+        if (!interactor.hasComplete()) {
+            Log.d("QWER","initinteractor")
             interactor.onNext(mInteractor)
             interactor.onComplete()
         }

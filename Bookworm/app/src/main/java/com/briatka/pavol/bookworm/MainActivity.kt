@@ -7,23 +7,20 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.content.FileProvider
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.CardView
 import android.text.TextUtils
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.KeyEvent
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.*
-import butterknife.BindView
+import android.widget.Toast
 import butterknife.ButterKnife
-import butterknife.OnClick
-import com.briatka.pavol.bookworm.clients.BookIsbnReviewClient
 import com.briatka.pavol.bookworm.clients.BookTitleReviewClient
 import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.customobjects.BookObject
 import com.briatka.pavol.bookworm.models.BookInteractor
 import com.briatka.pavol.bookworm.models.BookPresenter
-import com.github.ybq.android.spinkit.SpinKitView
+import com.briatka.pavol.bookworm.retrofit.RetrofitInstance
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
@@ -32,7 +29,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
-import net.cachapa.expandablelayout.ExpandableLayout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -42,23 +38,6 @@ import java.io.IOException
 
 class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
-
-    @BindView(R.id.review_web_view)
-    var reviewsWebView: WebView? = null
-    @BindView(R.id.title)
-    var titleTv: TextView? = null
-    @BindView(R.id.rating)
-    var ratingTv: TextView? = null
-    @BindView(R.id.spinkit_view)
-    var loadingAnimation: SpinKitView? = null
-    @BindView(R.id.info_layout)
-    var infoLayout: LinearLayout? = null
-    @BindView(R.id.rating_bar)
-    var ratingBar: RatingBar? = null
-    @BindView(R.id.main_card_view)
-    var mainCardView: CardView? = null
-    @BindView(R.id.expandable_layout)
-    var expandableLayout: ExpandableLayout? = null
 
     lateinit var imageBitmap: Bitmap
     lateinit var tempFilePath: String
@@ -79,10 +58,10 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
     private lateinit var subscriptions: CompositeDisposable
 
     override fun sendInput(input: String) {
-        if (reviewsWebView!!.alpha > 0) reviewsWebView!!.animate().alpha(0.0f).duration = longDuration.toLong()
-        if (infoLayout!!.alpha > 0) infoLayout!!.animate().alpha(0.0f).duration = shortDuration.toLong()
-        if (expandableLayout!!.isExpanded) expandableLayout!!.collapse()
-        loadingAnimation!!.animate().alpha(1.0f).duration = shortDuration.toLong()
+        if (review_web_view.alpha > 0) review_web_view.animate().alpha(0.0f).duration = longDuration.toLong()
+        if (info_layout.alpha > 0) info_layout.animate().alpha(0.0f).duration = shortDuration.toLong()
+        if (expandable_layout.isExpanded) expandable_layout.collapse()
+        spinkit_view.animate().alpha(1.0f).duration = shortDuration.toLong()
         reviewsFromTitle(input)
     }
 
@@ -97,7 +76,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
         viewModel = BookPresenter()
 
-        enter_title_button.setOnClickListener{
+        enter_title_button.setOnClickListener {
             val dialog = MyDialogFragment()
             dialog.show(supportFragmentManager, "MyDialogFragment")
         }
@@ -121,7 +100,8 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
     private fun initInteractor() {
 
-        if (!viewModel.isInteractorReady()){
+        if (!viewModel.isInteractorReady()) {
+            Log.d("QWER", "initinteractor")
             viewModel.setInteractor(BookInteractor())
         }
 
@@ -137,6 +117,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
     }
 
     private fun reviewsFromTitle(title: String) {
+        retrofit = RetrofitInstance.retrofitInstance
         val client = retrofit.create(BookTitleReviewClient::class.java)
         val call = client.getReviews(API_KEY, title)
 
@@ -149,22 +130,23 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
             }
 
             override fun onFailure(call: Call<BookObject>, t: Throwable) {
-                loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
-                Toast.makeText(this@MainActivity, "error :(", Toast.LENGTH_SHORT).show()
+                spinkit_view.animate().alpha(0.0f).duration = shortDuration.toLong()
+                Log.d("STATUS", t.message)
+                Toast.makeText(this@MainActivity, t.message, Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-    
+
     private fun processNetworkResponse(book: Book?) {
         if (book != null) {
             var reviews = selectSubString(book.reviewsWidget!!)
             reviews = reviews.replace("565", mScreenWidth)
             setupWebView(reviews)
-            titleTv!!.text = book.title
-            ratingBar!!.rating = java.lang.Float.parseFloat(book.rating!!)
+            book_title.text = book.title
+            _book_rating_bar.rating = java.lang.Float.parseFloat(book.rating!!)
         } else {
-            loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
+            spinkit_view.animate().alpha(0.0f).duration = shortDuration.toLong()
             Toast.makeText(this@MainActivity,
                     getString(R.string.isbn_not_found),
                     Toast.LENGTH_SHORT).show()
@@ -198,10 +180,10 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
-            loadingAnimation!!.animate().alpha(1.0f).duration = shortDuration.toLong()
-            if (reviewsWebView!!.alpha > 0) reviewsWebView!!.animate().alpha(0.0f).duration = longDuration.toLong()
-            if (infoLayout!!.alpha > 0) infoLayout!!.animate().alpha(0.0f).duration = longDuration.toLong()
-            if (expandableLayout!!.isExpanded) expandableLayout!!.collapse()
+            spinkit_view.animate().alpha(1.0f).duration = shortDuration.toLong()
+            if (review_web_view.alpha > 0) review_web_view.animate().alpha(0.0f).duration = longDuration.toLong()
+            if (info_layout.alpha > 0) info_layout.animate().alpha(0.0f).duration = longDuration.toLong()
+            if (expandable_layout.isExpanded) expandable_layout.collapse()
             imageBitmap = PhotoUtils.fixRotation(PhotoUtils.mResampleImage(tempFilePath, this), tempFilePath)
             image = FirebaseVisionImage.fromBitmap(imageBitmap)
             processBarcodeScan()
@@ -214,7 +196,9 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
                     if (barcodes.size > 0) {
                         for (barcode in barcodes) {
                             isbnCode = barcode.rawValue
+                            Log.d("QWER", "called")
                             if (!isbnCode.isNullOrEmpty()) {
+                                Log.d("QWER", isbnCode)
                                 viewModel.setIsbn(isbnCode!!)
                             }
                         }
@@ -222,11 +206,11 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
                         Toast.makeText(this@MainActivity,
                                 getString(R.string.wrong_photo_quality_toast),
                                 Toast.LENGTH_LONG).show()
-                        loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
+                        spinkit_view.animate().alpha(0.0f).duration = shortDuration.toLong()
                     }
                 }
                 .addOnFailureListener { e ->
-                    loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
+                    spinkit_view.animate().alpha(0.0f).duration = shortDuration.toLong()
                     Toast.makeText(this@MainActivity,
                             "Problem with code recognition" + e.toString(),
                             Toast.LENGTH_SHORT).show()
@@ -240,16 +224,16 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
     }
 
     private fun setupWebView(rawData: String) {
-        reviewsWebView!!.settings.javaScriptEnabled = true
-        reviewsWebView!!.loadData(rawData, "text/html", null)
-        reviewsWebView!!.webViewClient = object : WebViewClient() {
+        review_web_view.settings.javaScriptEnabled = true
+        review_web_view.loadData(rawData, "text/html", null)
+        review_web_view.webViewClient = object : WebViewClient() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
-                loadingAnimation!!.animate().alpha(0.0f).duration = shortDuration.toLong()
-                reviewsWebView!!.animate().alpha(1.0f).duration = longDuration.toLong()
-                expandableLayout!!.expand()
-                infoLayout!!.animate().alpha(1.0f).duration = longDuration.toLong()
+                spinkit_view.animate().alpha(0.0f).duration = shortDuration.toLong()
+                review_web_view.animate().alpha(1.0f).duration = longDuration.toLong()
+                expandable_layout.expand()
+                info_layout.animate().alpha(1.0f).duration = longDuration.toLong()
             }
         }
     }
@@ -271,8 +255,8 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (keyCode) {
                 KeyEvent.KEYCODE_BACK -> {
-                    if (reviewsWebView!!.canGoBack()) {
-                        reviewsWebView!!.goBack()
+                    if (review_web_view.canGoBack()) {
+                        review_web_view.goBack()
                     } else {
                         finish()
                     }

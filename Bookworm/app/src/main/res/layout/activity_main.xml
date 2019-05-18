@@ -78,7 +78,7 @@
                 android:paddingLeft="@dimen/small_margin">
 
                 <TextView
-                    android:id="@+id/title"
+                    android:id="@+id/book_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="@dimen/extra_small_margin"
@@ -91,7 +91,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/rating"
+                        android:id="@+id/book_rating"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_margin="@dimen/extra_small_margin"
@@ -99,7 +99,7 @@
                         android:textColor="@color/lightDarkTextColor" />
 
                     <RatingBar
-                        android:id="@+id/rating_bar"
+                        android:id="@+id/_book_rating_bar"
                         style="@style/Base.Widget.AppCompat.RatingBar.Small"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

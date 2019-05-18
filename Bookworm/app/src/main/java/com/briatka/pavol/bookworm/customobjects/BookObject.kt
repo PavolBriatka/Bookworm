@@ -5,10 +5,8 @@ import org.simpleframework.xml.Root
 
 
 @Root(name = "GoodreadsResponse", strict = false)
-class BookObject {
-
-
-    @Element(name = "book")
-    val book: Book? = null
-
-}
+class BookObject  @JvmOverloads constructor(
+        @field:Element(name = "book")
+        @param:Element(name = "book")
+        val book: Book? = null
+) {}
