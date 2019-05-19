@@ -1,6 +1,8 @@
 package com.briatka.pavol.bookworm
 
 import android.app.Activity
+import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -20,6 +22,7 @@ import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.customobjects.BookObject
 import com.briatka.pavol.bookworm.models.BookInteractor
 import com.briatka.pavol.bookworm.models.BookPresenter
+import com.briatka.pavol.bookworm.models.BookViewModel
 import com.briatka.pavol.bookworm.retrofit.RetrofitInstance
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcodeDetector
@@ -55,6 +58,7 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
     //NEW BLOCK OF MVVM VARIABLES
     private lateinit var viewModel: BookPresenter
+    private lateinit var vModel: BookViewModel
     private lateinit var subscriptions: CompositeDisposable
 
     override fun sendInput(input: String) {
@@ -75,6 +79,11 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
         detector = FirebaseVision.getInstance().visionBarcodeDetector
 
         viewModel = BookPresenter()
+        vModel = ViewModelProviders.of(this).get(BookViewModel::class.java)
+        val book = vModel.book
+        book.observe(this, Observer<Book> {
+            processNetworkResponse(it)
+        })
 
         enter_title_button.setOnClickListener {
             val dialog = MyDialogFragment()
@@ -94,15 +103,18 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
 
         subscriptions = CompositeDisposable()
 
-        subscriptions.addAll(bookUpdate())
+        //subscriptions.addAll(bookUpdate())
     }
 
 
     private fun initInteractor() {
 
         if (!viewModel.isInteractorReady()) {
-            Log.d("QWER", "initinteractor")
             viewModel.setInteractor(BookInteractor())
+        }
+
+        if (!vModel.isInteractorReady()) {
+            vModel.setInteractor(BookInteractor())
         }
 
 
@@ -196,10 +208,10 @@ class MainActivity : AppCompatActivity(), MyDialogFragment.OnInputListener {
                     if (barcodes.size > 0) {
                         for (barcode in barcodes) {
                             isbnCode = barcode.rawValue
-                            Log.d("QWER", "called")
                             if (!isbnCode.isNullOrEmpty()) {
-                                Log.d("QWER", isbnCode)
-                                viewModel.setIsbn(isbnCode!!)
+                                //viewModel.setIsbn(isbnCode!!)
+                                Log.e("QWER9", "1")
+                                vModel.setIsbn(isbnCode!!)
                             }
                         }
                     } else {

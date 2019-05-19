@@ -1,6 +1,7 @@
 package com.briatka.pavol.bookworm.models
 
-import android.util.Log
+import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.LiveDataReactiveStreams
 import com.briatka.pavol.bookworm.clients.RetrofitApiClient
 import com.briatka.pavol.bookworm.customobjects.Book
 import com.briatka.pavol.bookworm.interfaces.IBookInteractor
@@ -12,11 +13,10 @@ class BookInteractor: IBookInteractor {
 
     private val API_KEY = "RrXbLty3WjyNPa58H93Rdw"
 
-    override fun getIsbnData(isbn: String): Observable<NetworkRequestResult> {
-        Log.d("QWER", "interactor")
+    override fun getIsbnData(isbn: String): LiveData<NetworkRequestResult> {
         val client = RetrofitInstance.retrofitInstance.create(RetrofitApiClient::class.java)
 
-        return client.getReviewsIsbn(isbn, API_KEY)
+        return LiveDataReactiveStreams.fromPublisher(client.getReviewsIsbn(isbn, API_KEY)
                 .map {response ->
                     when (response.code()) {
                         200 -> NetworkRequestResult.onSuccess(response.body()?.book ?: Book())
@@ -28,7 +28,7 @@ class BookInteractor: IBookInteractor {
                 .onErrorReturn {
                     NetworkRequestResult.onUnknownError()
                 }
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(Schedulers.io()))
 
     }
 

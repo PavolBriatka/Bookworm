@@ -1,19 +1,29 @@
 package com.briatka.pavol.bookworm.models
 
+import android.app.Application
+import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.LiveDataReactiveStreams
+import android.arch.lifecycle.MutableLiveData
 import android.util.Log
 import com.briatka.pavol.bookworm.customobjects.Book
-import com.briatka.pavol.bookworm.interfaces.BookViewModel
 import com.briatka.pavol.bookworm.interfaces.IBookInteractor
+import com.briatka.pavol.bookworm.interfaces.NewBookViewModel
+import io.reactivex.BackpressureStrategy
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.ReplaySubject
 
-class BookPresenter : BookViewModel {
-
+class BookViewModel(application: Application) : AndroidViewModel(application), NewBookViewModel {
 
     private var interactor = ReplaySubject.create<IBookInteractor>()
+
+
+    private val _book = MutableLiveData<Book>()
+    val book: LiveData<Book>
+        get() = _book
 
     private val bookErrorSubject = BehaviorSubject.create<NetworkRequestResult.Status>()
     private val bookSubject = BehaviorSubject.create<Book>()
@@ -23,21 +33,24 @@ class BookPresenter : BookViewModel {
     private val subscription = CompositeDisposable()
 
     init {
-        subscription.addAll(getBookIsbnUpdate(),
+        subscription.addAll(//getBookIsbnUpdate(),
                 getBookTitleUpdate())
     }
 
-    override fun getIsbnData(isbn: String): Observable<Book> {
+    override fun getIsbnData(isbn: String) {
 
-        return Observable.empty<Book>()
-        /*return interactor.flatMap { interactor ->
-            interactor.getIsbnData(isbn)
+        val interactor = BookInteractor()
+
+        Log.e("QWER11", "3")
+        val result = interactor.getIsbnData(isbn)
+        _book.postValue(result.value?.book)
+        /*return interactor.getIsbnData(isbn)
                     .flatMap { response ->
                         when (response.status) {
                             NetworkRequestResult.Status.SUCCESS -> {
                                 bookErrorSubject.onNext(NetworkRequestResult.Status.SUCCESS)
 
-                                Observable.just(response.book)
+                                Observable.just(response.book!!)
                             }
                             NetworkRequestResult.Status.SERVER_ERROR -> {
                                 bookErrorSubject.onNext(NetworkRequestResult.Status.SERVER_ERROR)
@@ -52,7 +65,6 @@ class BookPresenter : BookViewModel {
                                 Observable.empty<Book>()
                             }
                         }
-                    }
         }*/
     }
 
@@ -61,15 +73,14 @@ class BookPresenter : BookViewModel {
     }
 
     fun setIsbn(isbn: String) {
-        Log.e("QWER","setisbn")
-        subjectIsbn.onNext(isbn)
+        getIsbnData(isbn)
     }
 
     fun setTitle(title: String) {
         subjectTitle.onNext(title)
     }
 
-    private fun getBookIsbnUpdate(): Disposable {
+    /*private fun getBookIsbnUpdate(): Disposable {
         return subjectIsbn.hide()
                 .flatMap { data ->
                     getIsbnData(data)
@@ -77,7 +88,7 @@ class BookPresenter : BookViewModel {
                 .subscribe { book ->
                     bookSubject.onNext(book)
                 }
-    }
+    }*/
 
     private fun getBookTitleUpdate(): Disposable {
         return subjectTitle.hide()
@@ -90,8 +101,10 @@ class BookPresenter : BookViewModel {
                 }
     }
 
-    override fun returnBookData(): Observable<Book> {
-        return bookSubject.hide()
+    override fun returnBookData(): LiveData<Book> {
+        return LiveDataReactiveStreams.fromPublisher(
+                bookSubject.hide().toFlowable(BackpressureStrategy.LATEST)
+        )
     }
 
     fun setInteractor(mInteractor: IBookInteractor) {
